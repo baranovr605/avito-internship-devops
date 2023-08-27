@@ -38,8 +38,8 @@ func set_key(w http.ResponseWriter, r *http.Request) {
   }
 
   db := setupDB()
-  for k, v := range requestBody {
-    err := db.Set(k, v, 0).Err()
+  for key, value := range requestBody {
+    err := db.Set(key, value, 0).Err()
     if err != nil {
       fmt.Println(err)
     } else {
@@ -85,13 +85,11 @@ func del_key(w http.ResponseWriter, r *http.Request) {
   }
 
   db := setupDB()
-  for k, _ := range requestBody {
-      _, err := db.Del(k).Result()
-      if err != nil { 
-        fmt.Println(err)
-      } else {
-        fmt.Fprintln(w, "Key correctly deleted!")
-      }
+  _, errbd := db.Del(requestBody["key"]).Result()
+  if errbd != nil { 
+    fmt.Println(errbd)
+  } else {
+    fmt.Fprintln(w, "Key correctly deleted!")
   }
 
   db.Close()
