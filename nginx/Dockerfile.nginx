@@ -1,0 +1,9 @@
+FROM debian:12.1-slim
+
+EXPOSE 80
+
+RUN apt-get update && \
+    apt-get install nginx -y && \
+    rm -rf /var/lib/apt/lists/*
+
+CMD ["nginx", "-g", "daemon off;"]

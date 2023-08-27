@@ -1,0 +1,44 @@
+version: "3.6"
+services:
+  goapp:
+    container_name: goapp
+    build:
+      context: ./app/
+      dockerfile: Dockerfile.goapp
+    networks:
+      - "go_app_network"
+    depends_on:
+      - redis-go
+    restart: always
+
+  nginx-go:
+    container_name: nginx-go
+    build:
+      context: ./nginx/
+      dockerfile: Dockerfile.nginx
+    ports:
+      - 8089:80
+    volumes:
+      - "./nginx/nginx.conf:/etc/nginx/nginx.conf"
+    networks:
+      - "go_app_network"
+    depends_on:
+      - redis-go
+    restart: always
+
+  redis-go:
+    container_name: redis-go
+    build:
+      context: ./redis/
+      dockerfile: Dockerfile.redis
+    volumes:
+      - "./redis/redis.conf:/etc/redis/redis.conf"
+    networks:
+      - "go_app_network"
+    restart: always
+  
+
+networks:
+  go_app_network:
+    name: "go_app_network"
+    driver: "bridge"

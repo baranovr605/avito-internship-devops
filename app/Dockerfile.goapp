@@ -1,0 +1,21 @@
+FROM debian:12.1-slim AS builder
+
+RUN apt-get update && \
+    apt-get install golang-go ca-certificates -y  && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY main.go ./
+RUN go mod init main && \
+    go mod tidy && \
+    go build -o app .
+
+FROM debian:12.1-slim
+
+EXPOSE 8000
+
+WORKDIR /app
+COPY --from=builder /app/app .
+
+ENTRYPOINT ["./app"]
