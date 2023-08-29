@@ -10,8 +10,10 @@ import (
 )
 
 // Vars for setup connect with redis and listen port server
-var redisAddr string = "redis-go:6379"
-var listenAddrServ string = ":8000"
+var (
+  redisAddr string = "redis-go:6379"
+  listenAddrServ string = ":8000"
+)
 
 // Function setup database
 func setupDB() *redis.Client {
