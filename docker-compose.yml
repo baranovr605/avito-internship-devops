@@ -5,6 +5,13 @@ services:
     build:
       context: ./app/
       dockerfile: Dockerfile.goapp
+    environment:
+      APP_PORT: ":8000"
+      REDIS_HOST: "redis-go:6379"
+      REDIS_USER: "admin"
+      REDIS_PASS_FILE: "/run/secrets/redis_pass"
+    secrets:
+      - redis_pass
     networks:
       - "go_app_network"
     depends_on:
@@ -33,6 +40,8 @@ services:
       dockerfile: Dockerfile.redis
     volumes:
       - "./redis/redis.conf:/etc/redis/redis.conf"
+    secrets:
+      - redis_acl
     networks:
       - "go_app_network"
     restart: always
@@ -42,3 +51,10 @@ networks:
   go_app_network:
     name: "go_app_network"
     driver: "bridge"
+
+
+secrets:
+  redis_pass:
+    file: "./app/RedisPass"
+  redis_acl:
+    file: "./redis/users.acl"

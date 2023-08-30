@@ -4,9 +4,9 @@
 
 if [[ "$1" == "gen_pass" ]];
   then
-    PASS=$(echo -n "$2" | sha256sum)
-    echo -n -e "\n\
-user admin +@all on #${PASS::-3}" >> ./redis/users.acl
+    PASS=$(echo -n "$3" | sha256sum)
+    echo -n -e "\nuser "$2" on ~* &* +@all #${PASS::-3}" >> ./redis/users.acl
+    echo -n -e "$3" > ./app/RedisPass
 elif [[ "$1" == "gen_certs" ]];
     then
       echo "Not work yet!"
