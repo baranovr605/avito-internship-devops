@@ -8,8 +8,19 @@ import (
     "github.com/redis/go-redis/v9"
     "net/http"
     "os"
+    "log"
     "io/ioutil"
     "context"
+)
+
+// DB sctruct
+type Database struct {
+  Client *redis.Client
+}
+
+// Context work with for DB
+var (
+  ctx = context.TODO()
 )
 
 // Var for setup Content-Type, listend port for app, redis data
@@ -22,29 +33,47 @@ var (
 )
 
 // Function setup database
-func setupDB() *redis.Client {
-
-  // Get Pass for redis from file (before mount for docker secret)
-	redis_pass_file, err := ioutil.ReadFile(redis_pass_file)
-    if err != nil {
-        panic(err)
-    }
-	redis_pass := string(redis_pass_file)
+func setupDB(host string, username string, pass string) (*Database, error) {
 
   // Create redis client
   client := redis.NewClient(&redis.Options{
-    Addr:     redis_host,
-    Username: redis_user, 
-    Password: redis_pass, 
-})
+    Addr:     host,
+    Username: username, 
+    Password: pass, 
+  })
+
+  if err := client.Ping(ctx).Err(); err != nil {
+    return nil, err
+  }
+
+  return &Database{
+    Client: client,
+  }, nil
+}
+
+// Functions for return pass from secret file
+func getPassFile(fileName string) string {
+
+  redis_pass_file, err := ioutil.ReadFile(fileName)
+  if err != nil {
+      panic(err)
+  }
+
+  return string(redis_pass_file)
+}
+
+// Function for return error 405, if not correct request
+func returnErr405(w http.ResponseWriter) {
+
+  w.WriteHeader(http.StatusMethodNotAllowed)
+  fmt.Fprintln(w, "405 Method not allowed")
   
-  return client
+  return
 }
 
 // Function add key-value in redis by API
-func set_key(w http.ResponseWriter, r *http.Request) {
+func set_key(w http.ResponseWriter, r *http.Request, db *Database) {
 
-  ctx := context.Background()
   w.Header().Set("Content-Type", contentType)
   var requestBody map[string]string
   err := json.NewDecoder(r.Body).Decode(&requestBody)
@@ -54,50 +83,44 @@ func set_key(w http.ResponseWriter, r *http.Request) {
       return
   }
 
-  db := setupDB()
   if len(requestBody) > 1 {
-    w.WriteHeader(http.StatusMethodNotAllowed)
-    fmt.Fprintln(w, "405 Method not allowed")
-  } else {
-    for key, value := range requestBody {
-      err := db.Set(ctx, key, value, 0).Err()
-      if err != nil {
-        fmt.Println(err)
-      } else {
-        fmt.Fprintln(w, "Key-val correctly write in redis!")
-      }
-    }
+    returnErr405(w)
+    return
   }
 
-  db.Close()
+  for key, value := range requestBody {
+    err := db.Client.Set(ctx, key, value, 0).Err()
+    if err != nil {
+      fmt.Println(err)
+    } else {
+      fmt.Fprintln(w, "Key-val correctly write in redis!")
+    }
+  }
    
 }
 
 // Function get key in redis by API
-func get_key(w http.ResponseWriter, r *http.Request) {
+func get_key(w http.ResponseWriter, r *http.Request, db *Database) {
 
-  ctx := context.Background()
   w.Header().Set("Content-Type", contentType)
 
   id := r.URL.Query()["key"][0]
   
-  db := setupDB()
-  value, _ := db.Get(ctx, id).Result()
+  value, _ := db.Client.Get(ctx, id).Result()
+
   if value != "" {
     fmt.Fprintln(w, value)
   } else {
     w.WriteHeader(http.StatusNotFound)
     fmt.Fprintln(w, "404 page not found")
+    return
   }
-
-  db.Close()
   
 }
 
 // Function del key in redis by API
-func del_key(w http.ResponseWriter, r *http.Request) {
+func del_key(w http.ResponseWriter, r *http.Request, db *Database) {
 
-  ctx := context.Background()
   w.Header().Set("Content-Type", contentType)
 
   var requestBody map[string]string
@@ -108,14 +131,13 @@ func del_key(w http.ResponseWriter, r *http.Request) {
       return
   }
 
-  db := setupDB()
-
   if len(requestBody) > 1 {
-    w.WriteHeader(http.StatusMethodNotAllowed)
-    fmt.Fprintln(w, "405 Method not allowed")
-  } else {
-    _, errbd := db.Del(ctx, requestBody["key"]).Result()
-  } 
+    returnErr405(w)
+    return 
+  }
+
+  _, errbd := db.Client.Del(ctx, requestBody["key"]).Result()
+
 
   if errbd != nil { 
     fmt.Println(errbd)
@@ -123,20 +145,36 @@ func del_key(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintln(w, "Key correctly deleted!")
   }
 
-  db.Close()
-
 }
 
 // Main function with endpoint's
 func main() {
+  
+  // Setup DB client for make APi requests
+  redis_pass := getPassFile(redis_pass_file)
+  db, err := setupDB(redis_host, redis_user, redis_pass)
 
+  if err != nil {
+    log.Fatalf("Failed to connect to redis: %s", err.Error())
+  }
+
+  // Setup routers with API
   router := mux.NewRouter()
 
-  router.HandleFunc("/set_key", set_key).Methods("POST")
+  router.HandleFunc("/set_key", func(w http.ResponseWriter, r *http.Request) {
+    set_key(w, r, db)
+    }).Methods("POST")
 
-  router.HandleFunc("/get_key", get_key).Methods("GET")
+  router.HandleFunc("/get_key", func(w http.ResponseWriter, r *http.Request) {
+    get_key(w, r, db)
+    }).Methods("GET")
 
-  router.HandleFunc("/del_key", del_key).Methods("DELETE")
+  router.HandleFunc("/del_key", func(w http.ResponseWriter, r *http.Request) {
+    del_key(w, r, db)
+    }).Methods("DELETE")
 
   http.ListenAndServe(app_port, router)
+
+  db.Client.Close()
+
 }
