@@ -14,4 +14,4 @@ RUN apt-get update && \
     apt-get install redis -y && \
     rm -rf /var/lib/apt/lists/*
 
-ENTRYPOINT ["redis-server", "--protected-mode", "no"]
+ENTRYPOINT ["redis-server", "/etc/redis/redis.conf"]

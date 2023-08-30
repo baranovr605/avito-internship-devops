@@ -5,8 +5,8 @@
 if [[ "$1" == "gen_pass" ]];
   then
     PASS=$(echo -n "$2" | sha256sum)
-    echo -n "$2" > golangpass
-    echo -n "user admin +@all on #${PASS::-3}" > redisacl.acl
+    echo -n -e "\n\
+user admin +@all on #${PASS::-3}" >> ./redis/users.acl
 elif [[ "$1" == "gen_certs" ]];
     then
       echo "Not work yet!"
