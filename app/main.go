@@ -55,7 +55,7 @@ func set_key(w http.ResponseWriter, r *http.Request) {
   }
 
   db := setupDB()
-  if len(requestBody) > 1: {
+  if len(requestBody) > 1 {
     w.WriteHeader(http.StatusMethodNotAllowed)
     fmt.Fprintln(w, "405 Method not allowed")
   } else {
@@ -110,13 +110,13 @@ func del_key(w http.ResponseWriter, r *http.Request) {
 
   db := setupDB()
 
-  if len(requestBody) > 1: {
+  if len(requestBody) > 1 {
     w.WriteHeader(http.StatusMethodNotAllowed)
     fmt.Fprintln(w, "405 Method not allowed")
   } else {
     _, errbd := db.Del(ctx, requestBody["key"]).Result()
   } 
-  
+
   if errbd != nil { 
     fmt.Println(errbd)
   } else {
