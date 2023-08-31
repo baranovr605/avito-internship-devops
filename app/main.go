@@ -40,14 +40,14 @@ func setupDB(host string, username string, pass string,
             cert string, key string) (*Database, error) {
 
   // Get certs and key for TLS
-  cert, err := tls.LoadX509KeyPair(cert, key)
+  tls_cert, err := tls.LoadX509KeyPair(cert, key)
   if err != nil {
     log.Fatal(err)
   }
 
   // Setup TLS config
   tlsConfig := &tls.Config{
-    Certificates: []tls.Certificate{cert},
+    Certificates: []tls.Certificate{tls_cert},
     MinVersion:   tls.VersionTLS12,
     InsecureSkipVerify: true,
   }

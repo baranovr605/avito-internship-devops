@@ -7,15 +7,14 @@ if [[ "$1" == "gen_pass" ]];
     PASS=$(echo -n "$3" | sha256sum)
     echo -n -e "\nuser "$2" on ~* &* +@all #${PASS::-3}" >> ./redis/users.acl
     echo -n -e "$3" > ./app/RedisPass
-elif [[ "$1" == "gen_certs" ]];
-    then
-      echo "Not work yet!"
+
 elif [[ "$1" == "help" ]];
     then
       echo -e "For generate certs use: \n \
       ./security.sh gen_certs \n \
       For generate password use: \n \
       ./security.sh gen_pass your_secret_pass"
+
 else
   echo -e "Not correct pamameters! Use: \n \
   ./security.sh help"
