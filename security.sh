@@ -10,9 +10,7 @@ if [[ "$1" == "gen_pass" ]];
 
 elif [[ "$1" == "help" ]];
     then
-      echo -e "For generate certs use: \n \
-      ./security.sh gen_certs \n \
-      For generate password use: \n \
+      echo -e "For generate password use: \n \
       ./security.sh gen_pass your_secret_pass"
 
 else

@@ -43,4 +43,4 @@ openssl req \
 
 generate_cert redis "Generic-cert"
 
-[ -f ${$CERTS_DIR}/redis.dh ] || openssl dhparam -out ${CERTS_DIR}/redis.dh 2048
+[ -f ${CERTS_DIR}/redis.dh ] || openssl dhparam -out ${CERTS_DIR}/redis.dh 2048
