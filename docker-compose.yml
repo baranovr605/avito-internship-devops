@@ -10,8 +10,12 @@ services:
       REDIS_HOST: "redis-go:6379"
       REDIS_USER: "admin"
       REDIS_PASS_FILE: "/run/secrets/redis_pass"
+      REDIS_CRT: "/run/secrets/redis_crt"
+      REDIS_KEY: "/run/secrets/redis_key"
     secrets:
       - redis_pass
+      - redis_key
+      - redis_crt
     networks:
       - "go_app_network"
     depends_on:
@@ -42,6 +46,9 @@ services:
       - "./redis/redis.conf:/etc/redis/redis.conf"
     secrets:
       - redis_acl
+      - redis_ca_crt
+      - redis_key
+      - redis_crt
     networks:
       - "go_app_network"
     restart: always
@@ -58,3 +65,9 @@ secrets:
     file: "./app/RedisPass"
   redis_acl:
     file: "./redis/users.acl"
+  redis_ca_crt:
+    file: "./certs/ca.crt"
+  redis_key:
+    file: "./certs/redis.key"
+  redis_crt:
+    file: "./certs/redis.crt"

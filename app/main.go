@@ -11,6 +11,7 @@ import (
     "log"
     "io/ioutil"
     "context"
+    "crypto/tls"
 )
 
 // DB sctruct
@@ -30,18 +31,36 @@ var (
   redis_host  string      = os.Getenv("REDIS_HOST")
   redis_user  string      = os.Getenv("REDIS_USER")
   redis_pass_file string  = os.Getenv("REDIS_PASS_FILE")
+  redis_cert  string      = os.Getenv("REDIS_CRT")
+  redis_key   string      = os.Getenv("REDIS_KEY")
 )
 
 // Function setup database
-func setupDB(host string, username string, pass string) (*Database, error) {
+func setupDB(host string, username string, pass string, 
+            cert string, key string) (*Database, error) {
 
-  // Create redis client
+  // Get certs and key for TLS
+  cert, err := tls.LoadX509KeyPair(cert, key)
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  // Setup TLS config
+  tlsConfig := &tls.Config{
+    Certificates: []tls.Certificate{cert},
+    MinVersion:   tls.VersionTLS12,
+    InsecureSkipVerify: true,
+  }
+
+  // Setup DB client
   client := redis.NewClient(&redis.Options{
     Addr:     host,
     Username: username, 
-    Password: pass, 
-  })
-
+    Password: pass,
+    TLSConfig: tlsConfig,
+    })
+  
+  // Ping to Redis for check connect
   if err := client.Ping(ctx).Err(); err != nil {
     return nil, err
   }
@@ -152,7 +171,7 @@ func main() {
   
   // Setup DB client for make APi requests
   redis_pass := getPassFile(redis_pass_file)
-  db, err := setupDB(redis_host, redis_user, redis_pass)
+  db, err := setupDB(redis_host, redis_user, redis_pass, redis_cert, redis_key)
 
   if err != nil {
     log.Fatalf("Failed to connect to redis: %s", err.Error())
