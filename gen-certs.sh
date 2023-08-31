@@ -32,6 +32,7 @@ generate_cert() {
             -out $certfile
 }
 
+mkdir mkdir -p ${CERTS_DIR}
 [ -f ${CERTS_DIR}/ca.key ] || openssl genrsa -out ${CERTS_DIR}/ca.key 4096
 openssl req \
     -x509 -new -nodes -sha256 \
